@@ -21,12 +21,14 @@ def load_credentials():
     if (not token or not chat_id) and os.path.isfile(CONFIG_PATH):
         try:
             with open(CONFIG_PATH, "r", encoding="utf-8") as f:
-                for line in f:
-                    line = line.strip()
+                for raw_line in f:
+                    line = raw_line.strip()
+                    if line.startswith("export "):
+                        line = line[7:].strip()
                     if line.startswith("TELEGRAM_BOT_TOKEN="):
-                        token = token or line.split("=", 1)[1].strip('"\'')
+                        token = token or line.split("=", 1)[1].strip('"\' \t;')
                     elif line.startswith("TELEGRAM_CHAT_ID="):
-                        chat_id = chat_id or line.split("=", 1)[1].strip('"\'')
+                        chat_id = chat_id or line.split("=", 1)[1].strip('"\' \t;')
         except Exception:
             pass
 

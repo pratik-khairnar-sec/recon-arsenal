@@ -105,9 +105,9 @@ ext_regex='xls|xml|xlsx|json|pdf|sql|doc|docx|pptx|txt|git|zip|tar\.gz|tgz|bak|7
 #  Build URL
 # ─────────────────────────────────────────
 if $subdomains; then
-  base_url="https://web.archive.org/cdx/search/cdx?url=*.$domain/*&collapse=urlkey&output=text&fl=original,statuscode"
+  base_url="https://web.archive.org/cdx/search/cdx?url=$domain&matchType=domain&collapse=urlkey&output=text&fl=original,statuscode&limit=10000"
 else
-  base_url="https://web.archive.org/cdx/search/cdx?url=$domain/*&collapse=urlkey&output=text&fl=original,statuscode"
+  base_url="https://web.archive.org/cdx/search/cdx?url=$domain&matchType=prefix&collapse=urlkey&output=text&fl=original,statuscode&limit=10000"
 fi
 
 $extensions       && base_url="${base_url}&filter=original:.*\.(${ext_regex})$"

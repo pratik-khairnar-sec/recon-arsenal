@@ -22,8 +22,14 @@ import json
 import argparse
 import urllib.request
 import urllib.parse
-from datetime import datetime
+from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
+def get_utc_timestamp():
+    try:
+        return datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
+    except Exception:
+        return datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')
 
 # ANSI Color Palette
 class C:
@@ -82,12 +88,14 @@ def load_telegram_config():
     if (not token or not chat_id) and os.path.isfile(CONFIG_PATH):
         try:
             with open(CONFIG_PATH, "r", encoding="utf-8") as f:
-                for line in f:
-                    line = line.strip()
+                for raw_line in f:
+                    line = raw_line.strip()
+                    if line.startswith("export "):
+                        line = line[7:].strip()
                     if line.startswith("TELEGRAM_BOT_TOKEN="):
-                        token = token or line.split("=", 1)[1].strip('"\'')
+                        token = token or line.split("=", 1)[1].strip('"\' \t;')
                     elif line.startswith("TELEGRAM_CHAT_ID="):
-                        chat_id = chat_id or line.split("=", 1)[1].strip('"\'')
+                        chat_id = chat_id or line.split("=", 1)[1].strip('"\' \t;')
         except Exception:
             pass
     return token, chat_id
@@ -141,16 +149,24 @@ def setup_telegram_wizard():
     chat_id = input(f"  {C.C}Enter Telegram Chat ID  :{C.RST} ").strip()
 
     if token and chat_id:
-        with open(CONFIG_PATH, "w", encoding="utf-8") as f:
-            f.write(f'export TELEGRAM_BOT_TOKEN="{token}"\n')
-            f.write(f'export TELEGRAM_CHAT_ID="{chat_id}"\n')
-        log_info(f"Credentials saved to {C.W}{CONFIG_PATH}{C.RST}")
+        os.environ["TELEGRAM_BOT_TOKEN"] = token
+        os.environ["TELEGRAM_CHAT_ID"] = chat_id
+        try:
+            with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+                f.write(f'export TELEGRAM_BOT_TOKEN="{token}"\n')
+                f.write(f'export TELEGRAM_CHAT_ID="{chat_id}"\n')
+                f.write(f'TELEGRAM_BOT_TOKEN="{token}"\n')
+                f.write(f'TELEGRAM_CHAT_ID="{chat_id}"\n')
+            log_info(f"Credentials saved to {C.W}{CONFIG_PATH}{C.RST}")
+        except Exception as e:
+            log_warn(f"Could not write to {CONFIG_PATH}: {e}")
+
         log_task("Sending test notification...")
         test_msg = (
             "🛡️ *ReconArsenal Notification*\n\n"
             "✅ *Telegram alerts successfully configured!*\n"
             "👤 Maintainer: Pratik Khairnar\n"
-            f"🕒 Timestamp: `{datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}`"
+            f"🕒 Timestamp: `{get_utc_timestamp()}`"
         )
         send_telegram(test_msg, token=token, chat_id=chat_id)
     else:
@@ -159,35 +175,50 @@ def setup_telegram_wizard():
 # ================================================================
 # 🌐 MODULE 1: WAYBACK MACHINE CDX RECON
 # ================================================================
-def run_wayback(domain, subdomains=True, extensions=False, status_codes=None):
+def run_wayback(domain, subdomains=True, extensions=False, status_codes=None, limit=10000):
     log_task(f"Querying Wayback Machine for: {C.W}{domain}{C.RST}")
     ext_pattern = r"\.(xls|xml|xlsx|json|pdf|sql|doc|docx|pptx|txt|git|zip|tar\.gz|tgz|bak|7z|rar|log|secret|db|backup|yml|gz|config|csv|yaml|env|key|pem)$"
     
-    if subdomains:
-        url = f"https://web.archive.org/cdx/search/cdx?url=*.{domain}/*&collapse=urlkey&output=text&fl=original,statuscode"
-    else:
-        url = f"https://web.archive.org/cdx/search/cdx?url={domain}/*&collapse=urlkey&output=text&fl=original,statuscode"
-
-    if status_codes:
-        sc_regex = "|".join(status_codes.split(","))
-        url += f"&filter=statuscode:({sc_regex})"
-
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"}
     results = []
-    try:
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            content = resp.read().decode("utf-8", errors="ignore")
-            for line in content.splitlines():
-                parts = line.strip().split()
-                if parts:
-                    u = parts[0]
-                    if extensions:
-                        if re.search(ext_pattern, u, re.IGNORECASE):
+
+    # Build strategies: fast indexed matchType first, then fallback
+    strategies = []
+    if subdomains:
+        strategies.append(f"https://web.archive.org/cdx/search/cdx?url={domain}&matchType=domain&collapse=urlkey&output=text&fl=original,statuscode&limit={limit}")
+        strategies.append(f"https://web.archive.org/cdx/search/cdx?url={domain}&matchType=prefix&collapse=urlkey&output=text&fl=original,statuscode&limit={limit}")
+    else:
+        strategies.append(f"https://web.archive.org/cdx/search/cdx?url={domain}&matchType=prefix&collapse=urlkey&output=text&fl=original,statuscode&limit={limit}")
+
+    for idx, base_url in enumerate(strategies):
+        url = base_url
+        if status_codes:
+            sc_regex = "|".join(status_codes.split(","))
+            url += f"&filter=statuscode:({sc_regex})"
+
+        try:
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=25) as resp:
+                for raw_line in resp:
+                    line = raw_line.decode("utf-8", errors="ignore").strip()
+                    if not line:
+                        continue
+                    parts = line.split()
+                    if parts:
+                        u = parts[0]
+                        if extensions:
+                            if re.search(ext_pattern, u, re.IGNORECASE):
+                                results.append(u)
+                        else:
                             results.append(u)
-                    else:
-                        results.append(u)
-    except Exception as e:
-        log_err(f"Wayback query error: {e}")
+            if results:
+                break
+        except Exception as e:
+            if idx < len(strategies) - 1:
+                log_warn(f"Wayback primary lookup stalled ({e}), falling back to prefix mode...")
+                continue
+            else:
+                log_err(f"Wayback query error: {e}")
 
     results = sorted(set(results))
     log_info(f"Wayback Machine discovered: {C.Y}{len(results)}{C.RST} URLs")
@@ -418,7 +449,7 @@ def run_full_recon(domain, send_tg=False, output_file=None):
             f"🌐 *Subdomains Discovered*: `{len(all_subdomains)}`\n"
             f"⏱️ *Duration*: `{elapsed}s`\n"
             f"👤 *Author*: Pratik Khairnar\n"
-            f"🕒 `{datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}`"
+            f"🕒 `{get_utc_timestamp()}`"
         )
         send_telegram(tg_msg)
 
