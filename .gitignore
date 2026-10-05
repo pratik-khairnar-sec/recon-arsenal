@@ -1,0 +1,23 @@
+# Output files
+*.txt
+!requirements.txt
+*.log
+*.xml
+*.csv
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+.env
+
+# Scan results
+results_*/
+nmap-out/
+
+# OS
+.DS_Store
+Thumbs.db
