@@ -1,0 +1,1942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ReconArsenal — Advanced Passive OSINT & Attack Surface Intelligence Suite</title>
+  <meta name="description" content="Unified passive reconnaissance framework combining Wayback CDX mining, AlienVault OTX, passive DNS, IDN punycode lookalike mapping, surgical Google dorking, and automated Telegram alerts. Strictly for educational & defensive security research by Pratik Khairnar.">
+  <meta name="keywords" content="ReconArsenal, OSINT, passive recon, attack surface discovery, wayback machine, alienvault otx, dorking, punycode, telegram bot, bug bounty, cybersecurity, infosec">
+  <meta name="author" content="Pratik Khairnar">
+  
+  <!-- Open Graph / Social Media -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="ReconArsenal — Passive OSINT & Threat Surface Framework">
+  <meta property="og:description" content="High-velocity, passive reconnaissance suite with real-time Telegram alerts & zero-dependency architecture. Strictly for educational research.">
+  <meta property="og:url" content="https://pratik-khairnar-sec.github.io/recon-arsenal/">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-base: #050811;
+      --bg-card: #0a1124;
+      --bg-card-hover: #0f1b38;
+      --bg-surface: #0e172e;
+      --bg-terminal: #03060d;
+      
+      --accent-emerald: #10b981;
+      --accent-cyan: #06b6d4;
+      --accent-teal: #14b8a6;
+      --accent-blue: #3b82f6;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --accent-purple: #a855f7;
+      
+      --glow-emerald: rgba(16, 185, 129, 0.25);
+      --glow-cyan: rgba(6, 182, 212, 0.25);
+      --glow-amber: rgba(245, 158, 11, 0.25);
+      
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-glow: rgba(6, 182, 212, 0.35);
+      --border-active: #06b6d4;
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-faint: #64748b;
+      
+      --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-mono: 'Fira Code', monospace;
+      
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+      --transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      font-size: 15px;
+      line-height: 1.6;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Subtle Cyber Grid */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(6, 182, 212, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(6, 182, 212, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #particles-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Nav Bar */
+    .navbar {
+      position: sticky;
+      top: 0;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      background: rgba(5, 8, 17, 0.85);
+      border-bottom: 1px solid var(--border-subtle);
+      z-index: 100;
+      padding: 16px 0;
+    }
+
+    .nav-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text-main);
+      font-weight: 800;
+      font-size: 1.25rem;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, var(--accent-emerald), var(--accent-cyan));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px var(--glow-cyan);
+    }
+
+    .brand-icon svg {
+      width: 20px;
+      height: 20px;
+      fill: #fff;
+    }
+
+    .brand-tag {
+      font-size: 0.7rem;
+      font-family: var(--font-mono);
+      padding: 3px 8px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: var(--accent-emerald);
+      border-radius: 20px;
+      font-weight: 600;
+      margin-left: 6px;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .nav-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: var(--transition);
+    }
+
+    .nav-link:hover {
+      color: var(--accent-cyan);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      border-radius: var(--radius-md);
+      text-decoration: none;
+      cursor: pointer;
+      transition: var(--transition);
+      border: none;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-emerald), var(--accent-cyan));
+      color: #030611;
+      font-weight: 700;
+      box-shadow: 0 4px 18px var(--glow-cyan);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px var(--glow-cyan);
+      color: #000;
+    }
+
+    .btn-secondary {
+      background: var(--bg-surface);
+      color: var(--text-main);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+      transform: translateY(-2px);
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 70px 0 40px;
+      text-align: center;
+    }
+
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 30px;
+      background: rgba(6, 182, 212, 0.1);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--accent-cyan);
+      margin-bottom: 24px;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background-color: var(--accent-emerald);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--accent-emerald);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.5; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.2); }
+      100% { opacity: 0.5; transform: scale(0.9); }
+    }
+
+    .hero-title {
+      font-size: 3.4rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: 20px;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .hero-gradient {
+      background: linear-gradient(135deg, #ffffff 30%, var(--accent-cyan) 75%, var(--accent-emerald) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-desc {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      max-width: 760px;
+      margin: 0 auto 36px;
+      line-height: 1.7;
+    }
+
+    .hero-actions {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 48px;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 60px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 20px 16px;
+      text-align: center;
+      transition: var(--transition);
+    }
+
+    .stat-card:hover {
+      border-color: var(--accent-cyan);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #fff;
+      font-family: var(--font-mono);
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Disclaimer Card - Strict Educational Use */
+    .disclaimer-card {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.07), rgba(15, 23, 42, 0.9));
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      border-left: 5px solid var(--accent-amber);
+      border-radius: var(--radius-lg);
+      padding: 22px 26px;
+      margin-bottom: 60px;
+      display: flex;
+      align-items: flex-start;
+      gap: 18px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+    }
+
+    .disclaimer-icon {
+      color: var(--accent-amber);
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .disclaimer-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #fef3c7;
+      margin-bottom: 6px;
+      letter-spacing: 0.01em;
+    }
+
+    .disclaimer-text {
+      font-size: 0.9rem;
+      color: #cbd5e1;
+      line-height: 1.6;
+    }
+
+    /* Interactive Showcase Workspace */
+    .section-title-wrap {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+
+    .section-tag {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--accent-cyan);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 8px;
+      display: inline-block;
+    }
+
+    .section-title {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+    }
+
+    .section-desc {
+      color: var(--text-muted);
+      max-width: 620px;
+      margin: 0 auto;
+    }
+
+    /* Sandbox Container */
+    .sandbox-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-glow);
+      border-radius: var(--radius-xl);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5), 0 0 30px rgba(6, 182, 212, 0.1);
+      overflow: hidden;
+      margin-bottom: 80px;
+    }
+
+    .sandbox-header {
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .sandbox-tabs {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+    }
+
+    .sandbox-tab {
+      padding: 9px 16px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: var(--transition);
+      white-space: nowrap;
+      font-family: inherit;
+    }
+
+    .sandbox-tab:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .sandbox-tab.active {
+      color: var(--accent-cyan);
+      background: rgba(6, 182, 212, 0.12);
+      border-color: rgba(6, 182, 212, 0.3);
+    }
+
+    .sandbox-window-controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .win-btn {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .win-red { background: #ef4444; }
+    .win-yellow { background: #f59e0b; }
+    .win-green { background: #10b981; }
+
+    .sandbox-body {
+      padding: 28px;
+    }
+
+    .tab-pane {
+      display: none;
+    }
+    .tab-pane.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Tab 1: Live Google Dork Studio */
+    .dork-form {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .input-field {
+      flex: 1;
+      background: var(--bg-terminal);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      outline: none;
+      transition: var(--transition);
+    }
+
+    .input-field:focus {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 16px var(--glow-cyan);
+    }
+
+    .filter-pills {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+
+    .filter-pill {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: var(--transition);
+      font-weight: 500;
+    }
+
+    .filter-pill:hover, .filter-pill.active {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: var(--accent-emerald);
+      color: var(--accent-emerald);
+    }
+
+    .dork-results-table {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .dork-row {
+      background: var(--bg-terminal);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      transition: var(--transition);
+    }
+
+    .dork-row:hover {
+      border-color: rgba(6, 182, 212, 0.4);
+      background: #050a17;
+    }
+
+    .dork-info {
+      flex: 1;
+    }
+
+    .dork-badge {
+      font-size: 0.72rem;
+      font-family: var(--font-mono);
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-bottom: 6px;
+      display: inline-block;
+      font-weight: 600;
+    }
+
+    .badge-auth { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .badge-secrets { background: rgba(244, 63, 94, 0.2); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3); }
+    .badge-backup { background: rgba(245, 158, 11, 0.2); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-cloud { background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
+
+    .dork-query {
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      color: #38bdf8;
+      word-break: break-all;
+    }
+
+    .dork-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .btn-sm {
+      padding: 7px 12px;
+      font-size: 0.78rem;
+    }
+
+    /* Tab 2: Punycode & Homoglyph Forge */
+    .puny-info-box {
+      background: rgba(6, 182, 212, 0.08);
+      border: 1px solid rgba(6, 182, 212, 0.2);
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+      font-size: 0.88rem;
+      color: #94a3b8;
+      margin-bottom: 20px;
+    }
+
+    .puny-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 14px;
+    }
+
+    .puny-card {
+      background: var(--bg-terminal);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: var(--transition);
+    }
+
+    .puny-card:hover {
+      border-color: var(--accent-emerald);
+      transform: translateY(-2px);
+    }
+
+    .puny-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .puny-unicode {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #fff;
+      font-family: var(--font-mono);
+    }
+
+    .puny-badge {
+      font-size: 0.7rem;
+      font-family: var(--font-mono);
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: var(--accent-emerald);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .puny-ascii {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: var(--accent-cyan);
+      background: rgba(0, 0, 0, 0.4);
+      padding: 4px 8px;
+      border-radius: 4px;
+      word-break: break-all;
+    }
+
+    /* Tab 3: Recon Terminal Simulator */
+    .terminal-wrapper {
+      background: var(--bg-terminal);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      font-family: var(--font-mono);
+      box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8);
+    }
+
+    .term-bar {
+      background: #0b1120;
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .term-title {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .term-screen {
+      padding: 20px;
+      min-height: 380px;
+      max-height: 480px;
+      overflow-y: auto;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+
+    .term-line {
+      margin-bottom: 6px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .t-prompt { color: #64748b; }
+    .t-info { color: #38bdf8; }
+    .t-success { color: #4ade80; }
+    .t-warn { color: #facc15; }
+    .t-danger { color: #f87171; }
+    .t-purple { color: #c084fc; }
+
+    .term-controls {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    /* Tab 4: Telegram Alert Simulator */
+    .telegram-demo-grid {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 28px;
+      align-items: start;
+    }
+
+    .tg-config-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-main);
+    }
+
+    .form-select {
+      width: 100%;
+      background: var(--bg-terminal);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      color: #fff;
+      font-family: inherit;
+      outline: none;
+    }
+
+    /* Smartphone / Telegram Phone Mockup */
+    .phone-mockup {
+      background: #000;
+      border: 3px solid #1e293b;
+      border-radius: 36px;
+      padding: 12px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 20px rgba(6, 182, 212, 0.15);
+      position: relative;
+    }
+
+    .phone-notch {
+      width: 120px;
+      height: 18px;
+      background: #1e293b;
+      border-radius: 0 0 12px 12px;
+      margin: 0 auto 10px;
+    }
+
+    .tg-chat-app {
+      background: #0e1621;
+      border-radius: 26px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 480px;
+    }
+
+    .tg-chat-header {
+      background: #17212b;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .tg-bot-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-emerald), var(--accent-cyan));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: #030611;
+      font-size: 0.9rem;
+    }
+
+    .tg-bot-meta {
+      flex: 1;
+    }
+
+    .tg-bot-name {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .tg-bot-status {
+      font-size: 0.72rem;
+      color: #4ade80;
+    }
+
+    .tg-chat-messages {
+      flex: 1;
+      padding: 14px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 16px 16px;
+    }
+
+    .tg-bubble {
+      background: #182533;
+      border-radius: 12px 12px 12px 2px;
+      padding: 12px 14px;
+      max-width: 95%;
+      align-self: flex-start;
+      border-left: 3px solid var(--accent-cyan);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      position: relative;
+    }
+
+    .tg-bubble-title {
+      font-weight: 700;
+      color: var(--accent-cyan);
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tg-bubble-body {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: #e2e8f0;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+
+    .tg-time {
+      font-size: 0.65rem;
+      color: #64748b;
+      text-align: right;
+      margin-top: 4px;
+    }
+
+    /* Tab 5: CLI Command Builder */
+    .builder-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .builder-options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .option-card {
+      background: var(--bg-terminal);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .option-card:hover {
+      border-color: rgba(6, 182, 212, 0.4);
+    }
+
+    .option-card input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent-cyan);
+      cursor: pointer;
+    }
+
+    .option-info {
+      flex: 1;
+    }
+
+    .option-title {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #fff;
+    }
+
+    .option-desc {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .builder-output-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .cmd-display {
+      background: var(--bg-terminal);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      color: #38bdf8;
+      word-break: break-all;
+      min-height: 80px;
+      display: flex;
+      align-items: center;
+    }
+
+    /* Features Grid */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-bottom: 80px;
+    }
+
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+      opacity: 0;
+      transition: var(--transition);
+    }
+
+    .feature-card:hover {
+      border-color: var(--accent-cyan);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    .feature-card:hover::before {
+      opacity: 1;
+    }
+
+    .feature-icon-wrap {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-md);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      color: var(--accent-cyan);
+    }
+
+    .feature-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: #fff;
+    }
+
+    .feature-desc {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* Quickstart Section */
+    .quickstart-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      padding: 36px;
+      margin-bottom: 80px;
+    }
+
+    .code-block {
+      background: var(--bg-terminal);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      color: #38bdf8;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 14px;
+    }
+
+    /* Author Section */
+    .author-card {
+      background: linear-gradient(135deg, var(--bg-card), var(--bg-surface));
+      border: 1px solid var(--border-glow);
+      border-radius: var(--radius-xl);
+      padding: 36px;
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      margin-bottom: 80px;
+    }
+
+    .author-avatar {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-emerald), var(--accent-cyan));
+      padding: 3px;
+      flex-shrink: 0;
+    }
+
+    .author-avatar img, .author-avatar .avatar-fallback {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: #030611;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.8rem;
+      color: var(--accent-cyan);
+    }
+
+    .author-info h3 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      margin-bottom: 6px;
+      color: #fff;
+    }
+
+    .author-role {
+      font-size: 0.88rem;
+      color: var(--accent-cyan);
+      font-family: var(--font-mono);
+      margin-bottom: 12px;
+    }
+
+    .author-bio {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    .author-links {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #0f172a;
+      border: 1px solid var(--accent-emerald);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: var(--radius-md);
+      font-size: 0.88rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s ease;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* Footer */
+    .footer {
+      border-top: 1px solid var(--border-subtle);
+      padding: 40px 0;
+      text-align: center;
+      color: var(--text-faint);
+      font-size: 0.88rem;
+    }
+
+    .footer a {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: var(--transition);
+    }
+
+    .footer a:hover {
+      color: var(--accent-cyan);
+    }
+
+    @media (max-width: 900px) {
+      .hero-title { font-size: 2.4rem; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .features-grid { grid-template-columns: 1fr; }
+      .telegram-demo-grid { grid-template-columns: 1fr; }
+      .builder-grid { grid-template-columns: 1fr; }
+      .author-card { flex-direction: column; text-align: center; }
+      .author-links { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="particles-canvas"></canvas>
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="container nav-content">
+      <a href="#" class="brand">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        </div>
+        <span>ReconArsenal</span>
+        <span class="brand-tag">v1.0.0</span>
+      </a>
+
+      <nav class="nav-links">
+        <a href="#sandbox" class="nav-link">Interactive Lab</a>
+        <a href="#features" class="nav-link">Engines</a>
+        <a href="#quickstart" class="nav-link">Quickstart</a>
+        <a href="#author" class="nav-link">Author</a>
+        <a href="https://github.com/pratik-khairnar-sec/recon-arsenal" target="_blank" class="btn btn-primary">
+          <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          GitHub Repo
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <div class="badge-pill">
+        <span class="pulse-dot"></span>
+        <span>DEFENSIVE RECONNAISSANCE &amp; OSINT SUITE</span>
+      </div>
+
+      <h1 class="hero-title">
+        Elite Passive OSINT &amp; Attack Surface <span class="hero-gradient">Intelligence Arsenal</span>
+      </h1>
+
+      <p class="hero-desc">
+        A unified reconnaissance suite orchestrating Wayback historical mining, AlienVault OTX feeds, passive DNS resolution, urlscan telemetry, IDN lookalike detection, and surgical Google dorking with instant Telegram notifications.
+      </p>
+
+      <div class="hero-actions">
+        <a href="#sandbox" class="btn btn-primary btn-lg">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Launch Interactive Lab
+        </a>
+        <a href="#quickstart" class="btn btn-secondary btn-lg">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>
+          Quick Installation
+        </a>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value">6+</div>
+          <div class="stat-label">OSINT Engines</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">0</div>
+          <div class="stat-label">Mandatory Pip Deps</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">&lt; 1s</div>
+          <div class="stat-label">Telegram Push Alert</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">100%</div>
+          <div class="stat-label">Passive &amp; Non-Intrusive</div>
+        </div>
+      </div>
+
+      <!-- Strict Educational Disclaimer -->
+      <div class="disclaimer-card">
+        <div class="disclaimer-icon">
+          <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <div>
+          <div class="disclaimer-title">FOR EDUCATIONAL AND AUTHORIZED DEFENSIVE RESEARCH ONLY</div>
+          <div class="disclaimer-text">
+            ReconArsenal is engineered strictly for security researchers, bug bounty hunters with explicit program authorizations, and defensive blue-teams. All data gathering is performed strictly against public historical archives (Wayback Machine, AlienVault OTX, passive DNS, public search dorks). It sends zero active attack traffic or exploitation payloads.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Sandbox Workspace -->
+  <section id="sandbox" class="container">
+    <div class="section-title-wrap">
+      <span class="section-tag">Interactive OSINT Workspace</span>
+      <h2 class="section-title">ReconArsenal Virtual Security Lab</h2>
+      <p class="section-desc">Experience the core intelligence modules live in your browser before running in terminal.</p>
+    </div>
+
+    <div class="sandbox-container">
+      <div class="sandbox-header">
+        <div class="sandbox-tabs">
+          <button class="sandbox-tab active" data-tab="tab-dorks">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Google Dork Studio
+          </button>
+          <button class="sandbox-tab" data-tab="tab-puny">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            Homoglyph &amp; Punycode Forge
+          </button>
+          <button class="sandbox-tab" data-tab="tab-terminal">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+            Terminal Simulator
+          </button>
+          <button class="sandbox-tab" data-tab="tab-telegram">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            Telegram Alert Dispatcher
+          </button>
+          <button class="sandbox-tab" data-tab="tab-builder">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            CLI Command Builder
+          </button>
+        </div>
+
+        <div class="sandbox-window-controls">
+          <span class="win-btn win-red"></span>
+          <span class="win-btn win-yellow"></span>
+          <span class="win-btn win-green"></span>
+        </div>
+      </div>
+
+      <div class="sandbox-body">
+        
+        <!-- Tab 1: Google Dork Studio -->
+        <div class="tab-pane active" id="tab-dorks">
+          <div class="dork-form">
+            <input type="text" id="dork-target" class="input-field" placeholder="Enter target domain (e.g. example.com)" value="tesla.com">
+            <button class="btn btn-primary" id="btn-gen-dorks">Generate Dorks</button>
+          </div>
+
+          <div class="filter-pills">
+            <button class="filter-pill active" data-cat="all">All Intelligence</button>
+            <button class="filter-pill" data-cat="auth">Login &amp; Admin</button>
+            <button class="filter-pill" data-cat="secrets">Configs &amp; Keys</button>
+            <button class="filter-pill" data-cat="backup">DB &amp; Backups</button>
+            <button class="filter-pill" data-cat="cloud">S3 &amp; Cloud Buckets</button>
+          </div>
+
+          <div class="dork-results-table" id="dork-list">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Tab 2: Punycode & Homoglyph Forge -->
+        <div class="tab-pane" id="tab-puny">
+          <div class="puny-info-box">
+            🛡️ <strong>Defensive Homoglyph Telemetry:</strong> Attackers register visually indistinguishable Cyrillic/Greek Unicode domains (e.g. replacing Latin 'o' with Cyrillic 'о') to mount credential phishing attacks. ReconArsenal generates every possible lookalike permutation and maps its ASCII Punycode representation for proactive defensive registration or SIEM domain monitoring.
+          </div>
+
+          <div class="dork-form">
+            <input type="text" id="puny-input" class="input-field" placeholder="Enter brand name or domain (e.g. paypal.com)" value="google.com">
+            <button class="btn btn-primary" id="btn-gen-puny">Forge Lookalikes</button>
+          </div>
+
+          <div class="puny-grid" id="puny-results">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Tab 3: Terminal Simulator -->
+        <div class="tab-pane" id="tab-terminal">
+          <div class="terminal-wrapper">
+            <div class="term-bar">
+              <span class="term-title">ReconArsenal Unified Passive Terminal • Bash / PowerShell Session</span>
+              <span style="color: #4ade80; font-size: 0.75rem;">● LIVE SIMULATION</span>
+            </div>
+            <div class="term-screen" id="terminal-stdout">
+              <div class="term-line"><span class="t-prompt">$</span> <span class="t-info">python arsenal.py -d hackerone.com --all --notify</span></div>
+              <div class="term-line"><span class="t-purple">╔══════════════════════════════════════════════════════════════╗</span></div>
+              <div class="term-line"><span class="t-purple">║        RECON ARSENAL — Advanced Passive OSINT Suite          ║</span></div>
+              <div class="term-line"><span class="t-purple">║      Author: Pratik Khairnar (@pratik-khairnar-sec)          ║</span></div>
+              <div class="term-line"><span class="t-purple">╚══════════════════════════════════════════════════════════════╝</span></div>
+              <div class="term-line"><span class="t-info">[*] Target: hackerone.com | Passive OSINT Pipeline Initialized</span></div>
+              <div class="term-line"><span class="t-info">[*] Telegram Alerts: ENABLED (Bot ID: 7892... Chat: -100...)</span></div>
+              <div class="term-line"><span class="t-prompt">[1/4]</span> <span class="t-info">Mining Wayback Machine CDX API archive for historical endpoints...</span></div>
+              <div class="term-line"><span class="t-success">[+] Wayback: 1,482 historical URLs retrieved (Filtered HTTP 200)</span></div>
+              <div class="term-line"><span class="t-prompt">[2/4]</span> <span class="t-info">Harvesting AlienVault OTX Passive DNS &amp; URL Telemetry...</span></div>
+              <div class="term-line"><span class="t-success">[+] AlienVault OTX: 940 unique indicator endpoints cataloged</span></div>
+              <div class="term-line"><span class="t-prompt">[3/4]</span> <span class="t-info">Resolving urlscan.io &amp; VirusTotal passive hostname datasets...</span></div>
+              <div class="term-line"><span class="t-success">[+] Passive Hostnames: 47 unique subdomains discovered</span></div>
+              <div class="term-line"><span class="t-warn">[!] SENSITIVE PATTERN DETECTED:</span> <span class="t-danger">https://api.hackerone.com/v1/export.json?token=REDACTED</span></div>
+              <div class="term-line"><span class="t-warn">[!] SENSITIVE PATTERN DETECTED:</span> <span class="t-danger">https://vpn.hackerone.com/.git/config</span></div>
+              <div class="term-line"><span class="t-prompt">[4/4]</span> <span class="t-info">Deduplicating and generating final recon export...</span></div>
+              <div class="term-line"><span class="t-success">[+] Exported 2,422 unique passive assets to `recon_hackerone.com.txt`</span></div>
+              <div class="term-line"><span class="t-success">[✓] Telegram notification dispatched successfully in 412ms!</span></div>
+            </div>
+          </div>
+
+          <div class="term-controls">
+            <input type="text" id="sim-target" class="input-field" style="max-width: 320px;" placeholder="Target (e.g. stripe.com)" value="stripe.com">
+            <button class="btn btn-primary" id="btn-run-sim">
+              <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Run Passive Recon Scan
+            </button>
+            <button class="btn btn-secondary" id="btn-clear-term">Clear Terminal</button>
+          </div>
+        </div>
+
+        <!-- Tab 4: Telegram Alert Simulator -->
+        <div class="tab-pane" id="tab-telegram">
+          <div class="telegram-demo-grid">
+            <div class="tg-config-card">
+              <h3 style="margin-bottom: 12px; color: #fff; font-size: 1.1rem;">Telegram Notification Engine Demo</h3>
+              <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 20px;">
+                ReconArsenal features a native, zero-dependency notification client (<code>telegram_notify.py</code>) using pure Python <code>urllib</code>. Test the real-time alert payload formats below.
+              </p>
+
+              <div class="form-group">
+                <label class="form-label">Alert Template</label>
+                <select id="tg-template" class="form-select">
+                  <option value="summary">Recon Completed (Full Intelligence Summary)</option>
+                  <option value="sensitive">High-Risk Sensitive Exposure Alert</option>
+                  <option value="subdomain">New Passive Subdomains Discovered</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Target Asset</label>
+                <input type="text" id="tg-target-input" class="input-field" value="uber.com">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Discovered Count</label>
+                <input type="number" id="tg-count-input" class="input-field" value="1849">
+              </div>
+
+              <button class="btn btn-primary" id="btn-send-tg-demo" style="width: 100%;">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                Dispatch Test Telegram Alert
+              </button>
+            </div>
+
+            <!-- Phone Preview -->
+            <div class="phone-mockup">
+              <div class="phone-notch"></div>
+              <div class="tg-chat-app">
+                <div class="tg-chat-header">
+                  <div class="tg-bot-avatar">⚡</div>
+                  <div class="tg-bot-meta">
+                    <div class="tg-bot-name">ReconArsenal Alert Bot</div>
+                    <div class="tg-bot-status">bot • online</div>
+                  </div>
+                </div>
+
+                <div class="tg-chat-messages" id="tg-messages-box">
+                  <div class="tg-bubble">
+                    <div class="tg-bubble-title">
+                      <span>🎯</span>
+                      <span>RECON INTEL COMPLETED</span>
+                    </div>
+                    <div class="tg-bubble-body">Target: <b>uber.com</b>
+Total Assets: <b>1,849</b> URLs
+Wayback CDX: 1,204 URLs
+AlienVault OTX: 645 URLs
+Subdomains: 82 unique hosts
+Saved to: <code>recon_uber.com.txt</code>
+
+<i>#ReconArsenal #OSINT #BugBounty</i></div>
+                    <div class="tg-time">19:04</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 5: CLI Command Builder -->
+        <div class="tab-pane" id="tab-builder">
+          <div class="builder-grid">
+            <div class="builder-options">
+              <label class="option-card">
+                <input type="checkbox" id="chk-wayback" checked>
+                <div class="option-info">
+                  <div class="option-title">--wayback</div>
+                  <div class="option-desc">Mine historical archives via Wayback Machine CDX API</div>
+                </div>
+              </label>
+
+              <label class="option-card">
+                <input type="checkbox" id="chk-otx" checked>
+                <div class="option-info">
+                  <div class="option-title">--otx</div>
+                  <div class="option-desc">Harvest AlienVault OTX indicator threat URLs</div>
+                </div>
+              </label>
+
+              <label class="option-card">
+                <input type="checkbox" id="chk-urlscan" checked>
+                <div class="option-info">
+                  <div class="option-title">--urlscan</div>
+                  <div class="option-desc">Extract passive URL snapshot telemetry from urlscan.io</div>
+                </div>
+              </label>
+
+              <label class="option-card">
+                <input type="checkbox" id="chk-vt">
+                <div class="option-info">
+                  <div class="option-title">--virustotal</div>
+                  <div class="option-desc">Passive DNS hostname resolution from VirusTotal</div>
+                </div>
+              </label>
+
+              <label class="option-card">
+                <input type="checkbox" id="chk-dorks">
+                <div class="option-info">
+                  <div class="option-title">--dorks</div>
+                  <div class="option-desc">Display categorized high-value Google dork search queries</div>
+                </div>
+              </label>
+
+              <label class="option-card">
+                <input type="checkbox" id="chk-puny">
+                <div class="option-info">
+                  <div class="option-title">--punycode</div>
+                  <div class="option-desc">Generate IDN homoglyph spoof lookalike domains</div>
+                </div>
+              </label>
+
+              <label class="option-card">
+                <input type="checkbox" id="chk-notify" checked>
+                <div class="option-info">
+                  <div class="option-title">--notify</div>
+                  <div class="option-desc">Push instant notification to your Telegram chat / channel</div>
+                </div>
+              </label>
+            </div>
+
+            <div class="builder-output-card">
+              <h3 style="color: #fff; font-size: 1.05rem;">Generated Command Line</h3>
+              <div class="form-group">
+                <label class="form-label">Target Domain</label>
+                <input type="text" id="builder-target" class="input-field" value="example.com">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Output File (optional)</label>
+                <input type="text" id="builder-out" class="input-field" value="output.txt">
+              </div>
+
+              <div class="cmd-display" id="generated-cmd">
+                python arsenal.py -d example.com --wayback --otx --urlscan --notify -o output.txt
+              </div>
+
+              <button class="btn btn-primary" id="btn-copy-cmd">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                Copy Command
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section id="features" class="container">
+    <div class="section-title-wrap">
+      <span class="section-tag">Modular Architecture</span>
+      <h2 class="section-title">Engineered For High-Velocity Passive Intel</h2>
+      <p class="section-desc">Six specialized reconnaissance engines operating in complete unison or standalone CLI modules.</p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon-wrap">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <h3 class="feature-title">Wayback CDX Streamer</h3>
+        <p class="feature-desc">Streams historical endpoint snapshots directly from the Internet Archive CDX API with HTTP status code filtering and sensitive extension detection.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon-wrap">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+        </div>
+        <h3 class="feature-title">AlienVault OTX Harvester</h3>
+        <p class="feature-desc">Pulls passive threat intelligence and observed historical URLs with automated pagination handling and multi-target rate management.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon-wrap">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        </div>
+        <h3 class="feature-title">Passive Subdomain Resolution</h3>
+        <p class="feature-desc">Aggregates passive DNS records and DOM snapshot telemetries from urlscan.io and VirusTotal without pinging the victim servers.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon-wrap">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <h3 class="feature-title">IDN Homoglyph Defense</h3>
+        <p class="feature-desc">Permutates brand characters into Cyrillic and Greek homoglyphs, computing RFC-3492 Punycode for brand protection and phishing surface defense.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon-wrap">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
+        <h3 class="feature-title">Surgical Google Dorking</h3>
+        <p class="feature-desc">Pre-built intelligence queries covering exposed administrative portals, database backups, private keys, environment files, and cloud storage.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon-wrap">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <h3 class="feature-title">Telegram Alert Dispatcher</h3>
+        <p class="feature-desc">Zero external dependencies. Uses standard Python urllib to push instant HTML-formatted alerts directly to Telegram channels and private chats.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quickstart Section -->
+  <section id="quickstart" class="container">
+    <div class="quickstart-section">
+      <div class="section-title-wrap" style="text-align: left; margin-bottom: 24px;">
+        <span class="section-tag">Zero Installation Friction</span>
+        <h2 class="section-title" style="font-size: 1.8rem;">Quick Setup &amp; Execution</h2>
+        <p class="section-desc" style="margin: 0;">ReconArsenal runs entirely on Python standard library without requiring pip dependencies.</p>
+      </div>
+
+      <p style="font-weight: 600; color: #fff; margin-top: 20px;">1. Clone the repository:</p>
+      <div class="code-block">
+        <code>git clone https://github.com/pratik-khairnar-sec/recon-arsenal.git &amp;&amp; cd recon-arsenal</code>
+        <button class="btn btn-secondary btn-sm" onclick="copySnippet('git clone https://github.com/pratik-khairnar-sec/recon-arsenal.git &amp;&amp; cd recon-arsenal')">Copy</button>
+      </div>
+
+      <p style="font-weight: 600; color: #fff; margin-top: 20px;">2. (Optional) Configure Telegram Bot Alerts:</p>
+      <div class="code-block">
+        <code>python telegram_notify.py --setup</code>
+        <button class="btn btn-secondary btn-sm" onclick="copySnippet('python telegram_notify.py --setup')">Copy</button>
+      </div>
+
+      <p style="font-weight: 600; color: #fff; margin-top: 20px;">3. Launch Interactive Terminal UI or run Full Scan:</p>
+      <div class="code-block">
+        <code>python arsenal.py -d target.com --all --notify -o results.txt</code>
+        <button class="btn btn-secondary btn-sm" onclick="copySnippet('python arsenal.py -d target.com --all --notify -o results.txt')">Copy</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Author Profile -->
+  <section id="author" class="container">
+    <div class="author-card">
+      <div class="author-avatar">
+        <div class="avatar-fallback">PK</div>
+      </div>
+      <div class="author-info">
+        <h3>Pratik Khairnar</h3>
+        <div class="author-role">Security Researcher &amp; Cybersecurity Tool Developer</div>
+        <p class="author-bio">
+          Creator of <strong>Reflectra</strong>, <strong>BlindStrike</strong>, <strong>WaybackLens</strong>, and <strong>ReconArsenal</strong>. Dedicated to building high-fidelity, low-latency, and zero-false-positive offensive security and OSINT tools for the defensive research community.
+        </p>
+        <div class="author-links">
+          <a href="https://github.com/pratik-khairnar-sec" target="_blank" class="btn btn-secondary btn-sm">
+            <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+            GitHub (@pratik-khairnar-sec)
+          </a>
+          <a href="https://github.com/pratik-khairnar-sec/Reflectra" target="_blank" class="btn btn-secondary btn-sm">Reflectra</a>
+          <a href="https://github.com/pratik-khairnar-sec/BlindStrike" target="_blank" class="btn btn-secondary btn-sm">BlindStrike</a>
+          <a href="https://github.com/pratik-khairnar-sec/wayback-lens" target="_blank" class="btn btn-secondary btn-sm">WaybackLens</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p style="margin-bottom: 8px;">ReconArsenal — Developed by <strong>Pratik Khairnar</strong>. Licensed under the MIT License.</p>
+      <p style="color: #64748b; font-size: 0.8rem;">
+        Strictly for educational security research &amp; authorized vulnerability assessment.
+      </p>
+    </div>
+  </footer>
+
+  <!-- Toast Notification element -->
+  <div id="toast" class="toast">
+    <svg width="18" height="18" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+    <span id="toast-text">Copied to clipboard!</span>
+  </div>
+
+  <script>
+    // Tab switching
+    const tabs = document.querySelectorAll('.sandbox-tab');
+    const panes = document.querySelectorAll('.tab-pane');
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        panes.forEach(p => p.classList.remove('active'));
+        
+        tab.classList.add('active');
+        const targetPane = document.getElementById(tab.getAttribute('data-tab'));
+        if (targetPane) targetPane.classList.add('active');
+      });
+    });
+
+    // Toast function
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      const text = document.getElementById('toast-text');
+      text.innerText = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    function copySnippet(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast("Copied to clipboard!");
+      });
+    }
+
+    // Tab 1: Google Dorks Logic
+    const dorkDefinitions = [
+      { cat: 'auth', badge: 'badge-auth', label: 'Auth & Login', query: 'site:{T} inurl:admin | inurl:login | inurl:dashboard | inurl:portal' },
+      { cat: 'auth', badge: 'badge-auth', label: 'OAuth Redirects', query: 'site:{T} inurl:oauth | inurl:callback | inurl:redirect_uri' },
+      { cat: 'secrets', badge: 'badge-secrets', label: 'Environment Files', query: 'site:{T} ext:env | ext:yml | ext:yaml | ext:json "DB_PASSWORD" | "api_key"' },
+      { cat: 'secrets', badge: 'badge-secrets', label: 'Git Repositories', query: 'site:{T} inurl:".git" intitle:"Index of /.git"' },
+      { cat: 'backup', badge: 'badge-backup', label: 'DB Dumps', query: 'site:{T} ext:sql | ext:db | ext:dump | ext:bak | ext:backup' },
+      { cat: 'backup', badge: 'badge-backup', label: 'Archive Backups', query: 'site:{T} ext:zip | ext:tar | ext:tar.gz | ext:rar | ext:7z "backup"' },
+      { cat: 'cloud', badge: 'badge-cloud', label: 'AWS S3 Buckets', query: 'site:s3.amazonaws.com "{T}" | site:blob.core.windows.net "{T}"' },
+      { cat: 'cloud', badge: 'badge-cloud', label: 'Firebase Databases', query: 'site:firebaseio.com "{T}"' }
+    ];
+
+    let currentDorkCat = 'all';
+
+    function renderDorks() {
+      const target = document.getElementById('dork-target').value.trim() || 'example.com';
+      const container = document.getElementById('dork-list');
+      container.innerHTML = '';
+
+      const filtered = dorkDefinitions.filter(d => currentDorkCat === 'all' || d.cat === currentDorkCat);
+
+      filtered.forEach(item => {
+        const fullQ = item.query.replaceAll('{T}', target);
+        const row = document.createElement('div');
+        row.className = 'dork-row';
+        row.innerHTML = `
+          <div class="dork-info">
+            <span class="dork-badge ${item.badge}">${item.label}</span>
+            <div class="dork-query">${fullQ}</div>
+          </div>
+          <div class="dork-actions">
+            <button class="btn btn-secondary btn-sm" onclick="copySnippet('${fullQ.replace(/'/g, "\\'")}')">Copy</button>
+            <a href="https://www.google.com/search?q=${encodeURIComponent(fullQ)}" target="_blank" class="btn btn-primary btn-sm">Search</a>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    document.getElementById('btn-gen-dorks').addEventListener('click', renderDorks);
+
+    document.querySelectorAll('.filter-pill').forEach(pill => {
+      pill.addEventListener('click', (e) => {
+        document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        currentDorkCat = pill.getAttribute('data-cat');
+        renderDorks();
+      });
+    });
+
+    renderDorks();
+
+    // Tab 2: Punycode & Homoglyph Forge
+    const homoglyphMap = {
+      'a': ['а', 'α'], // Cyrillic, Greek
+      'c': ['с', 'ϲ'],
+      'e': ['е', 'ε'],
+      'i': ['і', 'ɩ'],
+      'o': ['о', 'ο'],
+      'p': ['р', 'ρ'],
+      's': ['ѕ'],
+      'x': ['х'],
+      'y': ['у']
+    };
+
+    function generatePunycodeLookalikes() {
+      const input = document.getElementById('puny-input').value.trim() || 'google.com';
+      const container = document.getElementById('puny-results');
+      container.innerHTML = '';
+
+      // Generate up to 6 permutations
+      const results = [];
+      const parts = input.split('.');
+      const name = parts[0];
+      const tld = parts.slice(1).join('.');
+
+      for (let i = 0; i < name.length; i++) {
+        const char = name[i].toLowerCase();
+        if (homoglyphMap[char]) {
+          homoglyphMap[char].forEach(sub => {
+            const fakeName = name.substring(0, i) + sub + name.substring(i + 1);
+            const fullDomain = tld ? `${fakeName}.${tld}` : fakeName;
+            results.push({
+              unicode: fullDomain,
+              punycode: `xn--${fakeName.length > 5 ? '80a' + fakeName.substring(0,3) : 'fake'}.${tld || 'com'}`,
+              substituted: `Substituted '${char}' with '${sub}'`
+            });
+          });
+        }
+      }
+
+      if (results.length === 0) {
+        results.push({
+          unicode: input.replace(/o/g, 'о'),
+          punycode: `xn--${input.replace('.', '-')}-lookalike`,
+          substituted: 'Sample homoglyph substitution'
+        });
+      }
+
+      results.slice(0, 6).forEach((item, idx) => {
+        const card = document.createElement('div');
+        card.className = 'puny-card';
+        card.innerHTML = `
+          <div class="puny-top">
+            <span class="puny-unicode">${item.unicode}</span>
+            <span class="puny-badge">Homoglyph #${idx + 1}</span>
+          </div>
+          <div class="puny-ascii">Punycode: ${item.punycode}</div>
+          <div style="font-size: 0.75rem; color: #94a3b8;">${item.substituted}</div>
+          <button class="btn btn-secondary btn-sm" style="margin-top: 6px;" onclick="copySnippet('${item.unicode}')">Copy Domain</button>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    document.getElementById('btn-gen-puny').addEventListener('click', generatePunycodeLookalikes);
+    generatePunycodeLookalikes();
+
+    // Tab 3: Terminal Simulation
+    document.getElementById('btn-run-sim').addEventListener('click', () => {
+      const target = document.getElementById('sim-target').value.trim() || 'stripe.com';
+      const term = document.getElementById('terminal-stdout');
+      
+      term.innerHTML += `<div class="term-line" style="margin-top: 14px;"><span class="t-prompt">$</span> <span class="t-info">python arsenal.py -d ${target} --all --notify</span></div>`;
+      term.innerHTML += `<div class="term-line"><span class="t-info">[*] Scanning ${target} across Wayback, OTX, Passive DNS &amp; Dorks...</span></div>`;
+      
+      setTimeout(() => {
+        term.innerHTML += `<div class="term-line"><span class="t-prompt">[1/4]</span> <span class="t-success">[+] Wayback: 618 URLs retrieved for ${target}</span></div>`;
+        term.scrollTop = term.scrollHeight;
+      }, 500);
+
+      setTimeout(() => {
+        term.innerHTML += `<div class="term-line"><span class="t-prompt">[2/4]</span> <span class="t-success">[+] AlienVault: 412 passive endpoints cataloged</span></div>`;
+        term.scrollTop = term.scrollHeight;
+      }, 1000);
+
+      setTimeout(() => {
+        term.innerHTML += `<div class="term-line"><span class="t-warn">[!] SENSITIVE PATTERN FOUND:</span> <span class="t-danger">https://api.${target}/v1/internal/healthz</span></div>`;
+        term.innerHTML += `<div class="term-line"><span class="t-success">[✓] Telegram notification pushed to channel for ${target}</span></div>`;
+        term.scrollTop = term.scrollHeight;
+        showToast("Passive Recon simulation completed!");
+      }, 1600);
+    });
+
+    document.getElementById('btn-clear-term').addEventListener('click', () => {
+      document.getElementById('terminal-stdout').innerHTML = `<div class="term-line"><span class="t-prompt">$</span> <span class="t-info">terminal ready</span></div>`;
+    });
+
+    // Tab 4: Telegram Demo
+    document.getElementById('btn-send-tg-demo').addEventListener('click', () => {
+      const type = document.getElementById('tg-template').value;
+      const target = document.getElementById('tg-target-input').value.trim() || 'uber.com';
+      const count = document.getElementById('tg-count-input').value.trim() || '1849';
+      const box = document.getElementById('tg-messages-box');
+
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+      let title = "🎯 RECON INTEL COMPLETED";
+      let content = "";
+
+      if (type === 'summary') {
+        title = "🎯 RECON INTEL COMPLETED";
+        content = `Target: <b>${target}</b>\nTotal Assets: <b>${count}</b> URLs\nWayback CDX: 1,204 URLs\nAlienVault OTX: 645 URLs\nSubdomains: 82 unique hosts\nSaved to: <code>recon_${target}.txt</code>\n\n<i>#ReconArsenal #OSINT #BugBounty</i>`;
+      } else if (type === 'sensitive') {
+        title = "🚨 SENSITIVE EXPOSURE DETECTED";
+        content = `Target: <b>${target}</b>\nSeverity: <b>CRITICAL</b>\nEndpoint: <code>https://${target}/.env</code>\nMatches: DB_PASSWORD, JWT_SECRET\nStatus: <b>HTTP 200 OK</b>\n\n<i>#SecretLeak #VulnerabilityAlert</i>`;
+      } else {
+        title = "🌐 NEW SUBDOMAINS DISCOVERED";
+        content = `Target: <b>${target}</b>\nDiscovered: <b>${count}</b> hostnames\nPassive Sources: urlscan + VirusTotal\nSample: <code>dev-api.${target}</code>, <code>staging.${target}</code>\n\n<i>#PassiveDNS #Recon</i>`;
+      }
+
+      const bubble = document.createElement('div');
+      bubble.className = 'tg-bubble';
+      bubble.style.animation = 'fadeIn 0.3s ease';
+      bubble.innerHTML = `
+        <div class="tg-bubble-title">
+          <span>⚡</span>
+          <span>${title}</span>
+        </div>
+        <div class="tg-bubble-body">${content}</div>
+        <div class="tg-time">${timeStr}</div>
+      `;
+
+      box.appendChild(bubble);
+      box.scrollTop = box.scrollHeight;
+      showToast("Telegram message delivered to previewer!");
+    });
+
+    // Tab 5: CLI Command Builder
+    function updateCommand() {
+      const target = document.getElementById('builder-target').value.trim() || 'example.com';
+      const outFile = document.getElementById('builder-out').value.trim();
+      
+      const flags = [];
+      if (document.getElementById('chk-wayback').checked) flags.push('--wayback');
+      if (document.getElementById('chk-otx').checked) flags.push('--otx');
+      if (document.getElementById('chk-urlscan').checked) flags.push('--urlscan');
+      if (document.getElementById('chk-vt').checked) flags.push('--virustotal');
+      if (document.getElementById('chk-dorks').checked) flags.push('--dorks');
+      if (document.getElementById('chk-puny').checked) flags.push('--punycode');
+      if (document.getElementById('chk-notify').checked) flags.push('--notify');
+      if (outFile) flags.push(`-o ${outFile}`);
+
+      const cmd = `python arsenal.py -d ${target} ${flags.join(' ')}`;
+      document.getElementById('generated-cmd').innerText = cmd;
+    }
+
+    document.querySelectorAll('.builder-options input').forEach(input => {
+      input.addEventListener('change', updateCommand);
+    });
+    document.getElementById('builder-target').addEventListener('input', updateCommand);
+    document.getElementById('builder-out').addEventListener('input', updateCommand);
+    document.getElementById('btn-copy-cmd').addEventListener('click', () => {
+      copySnippet(document.getElementById('generated-cmd').innerText);
+    });
+
+    // Particle Background
+    const canvas = document.getElementById('particles-canvas');
+    const ctx = canvas.getContext('2d');
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+
+    window.addEventListener('resize', () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    });
+
+    const particles = [];
+    for (let i = 0; i < 40; i++) {
+      particles.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vx: (Math.random() - 0.5) * 0.4,
+        vy: (Math.random() - 0.5) * 0.4,
+        radius: Math.random() * 2 + 1
+      });
+    }
+
+    function animateParticles() {
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = 'rgba(6, 182, 212, 0.2)';
+      ctx.strokeStyle = 'rgba(6, 182, 212, 0.05)';
+
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+
+        if (p.x < 0) p.x = width;
+        if (p.x > width) p.x = 0;
+        if (p.y < 0) p.y = height;
+        if (p.y > height) p.y = 0;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        for (let j = i + 1; j < particles.length; j++) {
+          const p2 = particles[j];
+          const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+          if (dist < 120) {
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      requestAnimationFrame(animateParticles);
+    }
+    animateParticles();
+  </script>
+</body>
+</html>

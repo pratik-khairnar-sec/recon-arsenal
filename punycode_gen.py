@@ -2,13 +2,43 @@
 # Author: Pratik Khairnar (https://github.com/pratik-khairnar-sec)
 # Description: Generates punycode/homoglyph variants for a given letter for IDN domain spoofing research
 
+import sys
+
+# ─────────────────────────────────────────
+#  Colors
+# ─────────────────────────────────────────
+R   = "\033[91m"
+G   = "\033[92m"
+Y   = "\033[93m"
+C   = "\033[96m"
+M   = "\033[95m"
+W   = "\033[97m"
+DIM = "\033[2m"
+BLD = "\033[1m"
+RST = "\033[0m"
+
+def banner():
+    print(f"""
+{Y}  ██████╗ ██╗   ██╗███╗   ██╗██╗   ██╗
+{Y}  ██╔══██╗██║   ██║████╗  ██║╚██╗ ██╔╝
+{C}  ██████╔╝██║   ██║██╔██╗ ██║ ╚████╔╝
+{C}  ██╔═══╝ ██║   ██║██║╚██╗██║  ╚██╔╝
+{M}  ██║     ╚██████╔╝██║ ╚████║   ██║
+{M}  ╚═╝      ╚═════╝ ╚═╝  ╚═══╝   ╚═╝
+{DIM}{W}  ─────────────────────────────────────────────
+  Punycode / Homoglyph Generator
+  IDN Domain Spoofing Research Tool
+  by Pratik Khairnar  •  github.com/pratik-khairnar-sec
+  ─────────────────────────────────────────────{RST}
+""")
+
 def encode_punycode(char):
     try:
         return char.encode('idna').decode('ascii')
-    except:
+    except Exception:
         try:
             return 'xn--' + char.encode('punycode').decode('ascii')
-        except:
+        except Exception:
             return None
 
 homoglyphs_map = {
@@ -41,21 +71,40 @@ homoglyphs_map = {
 }
 
 def generate_punycode_variants(letter):
-    print(f"\n🔎 Punycode variants for letter: '{letter}'\n")
     letter = letter.lower()
     glyphs = homoglyphs_map.get(letter, [])
     if not glyphs:
-        print("❌ No homoglyphs found for this letter.")
+        print(f"  {R}[✘] No homoglyphs found for '{letter}'.{RST}\n")
         return
 
+    print(f"\n  {C}[»]{RST} Punycode variants for letter  {BLD}{Y}'{letter}'{RST}  "
+          f"({len(glyphs)} homoglyphs found)\n")
+    print(f"  {DIM}{'GLYPH':<12}{'PUNYCODE'}{RST}")
+    print(f"  {DIM}{'─' * 40}{RST}")
+
+    found = 0
     for glyph in glyphs:
         punycode = encode_punycode(glyph)
         if punycode:
-            print(f"{glyph} -> {punycode}")
+            print(f"  {Y}{glyph:<12}{RST}{G}{punycode}{RST}")
+            found += 1
 
-# User input
-letter = input("Enter a letter (a-z): ").strip()
+    print(f"\n  {DIM}{'─' * 40}{RST}")
+    print(f"  {M}[✔]{RST} {found} valid punycode variants generated.\n")
+
+# ─────────────────────────────────────────
+#  MAIN
+# ─────────────────────────────────────────
+banner()
+
+try:
+    letter = input(f"  {C}╔══ Enter a letter (a-z){RST}\n  {C}╚═▶{RST} ").strip()
+except KeyboardInterrupt:
+    print(f"\n\n  {R}[!] Interrupted. Goodbye!{RST}\n")
+    sys.exit(0)
+
 if len(letter) == 1 and letter.isalpha():
     generate_punycode_variants(letter)
 else:
-    print("❗ Please enter a single valid letter.")
+    print(f"\n  {R}[✘] Please enter a single valid letter (a-z).{RST}\n")
+    sys.exit(1)

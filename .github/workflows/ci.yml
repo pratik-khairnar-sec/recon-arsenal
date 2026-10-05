@@ -1,0 +1,37 @@
+name: ReconArsenal CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Validate Python Syntax & Bytecode Compilation
+      run: |
+        python -m py_compile *.py
+        echo "All Python scripts compiled successfully with zero syntax errors."
+
+    - name: Validate Master CLI Help & Flags
+      run: |
+        python arsenal.py --help
+        python telegram_notify.py --help
+
+    - name: Validate Shell Script Syntax
+      run: |
+        for f in *.sh; do
+          bash -n "$f"
+          echo "Validated $f syntax successfully."
+        done
