@@ -13,6 +13,9 @@ __pycache__/
 venv/
 env/
 .env
+.env.*
+.recon_arsenal_env
+*.env
 
 # Scan results
 results_*/
